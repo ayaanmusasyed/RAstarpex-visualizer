@@ -96,6 +96,17 @@ def apply_trace_step(stp: TraceStepper) -> None:
         })
         return
 
+    if t == "prune":
+        item = extract_realization(evt)
+
+        stp.events.append({
+            "kind": "prune",
+            "state": item["state"],
+            "f": item["f"],
+            "where": evt.get("where", "search"),
+        })
+        return
+    
     stp.events.append({"kind": "other", "raw": evt})
 
 

@@ -1,5 +1,7 @@
 import streamlit as st
 
+from viz.core.rulebook_classes import remove_edges_inside_classes
+
 from viz.core.rulebook_state import rename_rule
 from viz.core.rulebook_edit import (
     add_class_edge,
@@ -14,10 +16,28 @@ def dispatch_rulebook_event(event, rule_names, prec_df, eq_classes):
     action = event.get("action")
 
     if action == "rename_rule":
+        old_name = str(event["old"]).strip()
+        new_name = str(event["new"]).strip()
+
         new_rule_names, new_prec_df = rename_rule(
-            rule_names, prec_df, event["old"], event["new"],
+            rule_names,
+            prec_df,
+            old_name,
+            new_name,
         )
-        st.session_state.pending_rule_names_csv = ",".join(new_rule_names)
+
+        new_eq_classes = [
+            [
+                new_name if rule == old_name else rule
+                for rule in cls
+            ]
+            for cls in eq_classes
+        ]
+
+        st.session_state.pending_rule_names_csv = ",".join(
+            new_rule_names
+        )
+        st.session_state.eq_classes = new_eq_classes
         st.session_state.prec_df = new_prec_df
         return
 
@@ -34,8 +54,15 @@ def dispatch_rulebook_event(event, rule_names, prec_df, eq_classes):
         return
 
     if action == "merge_classes":
-        st.session_state.eq_classes = merge_class_indices(
-            eq_classes, event["class_indices"],
+        new_eq_classes = merge_class_indices(
+            eq_classes,
+            event["class_indices"],
+        )
+
+        st.session_state.eq_classes = new_eq_classes
+        st.session_state.prec_df = remove_edges_inside_classes(
+            prec_df,
+            new_eq_classes,
         )
         return
 

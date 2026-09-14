@@ -149,13 +149,18 @@ def render_single_run_view(edges_df, rule_names):
         )
 
     open_rows = []
-    for key, tb, it in stp.OPEN[:200]:
+    ordered_open = sorted(
+    stp.OPEN,
+    key=lambda entry: (entry[0], entry[1]),
+    )
+
+    for key, tb, it in ordered_open[:200]:
         f_unscaled = unscale_vec(it["f"])
         key_unscaled = unscale_vec(list(key))
 
         row = {
             "state": id_to_label(it["state"]),
-            "f + g + h": pretty_vec(key_unscaled),
+            "Priority key": pretty_vec(key_unscaled),
         }
 
         for i, x in enumerate(f_unscaled):
