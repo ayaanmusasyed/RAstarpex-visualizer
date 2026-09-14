@@ -1,6 +1,16 @@
-build/
+# C++ build output
+/build/
+
+# Python-generated files
 __pycache__/
 *.pyc
+
+# macOS files
 .DS_Store
-merge-repo.jsviz/frontend/node_modules/
-viz/frontend/build/
+
+
+/llm_text_transcripts/
+/merge-repo.js
+
+# Frontend dependencies
+/viz/frontend/node_modules/

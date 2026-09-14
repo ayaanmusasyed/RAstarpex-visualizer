@@ -13,26 +13,36 @@
 # crashes. index.jsx stamps a unique _seq onto every event; we just
 # remember the last _seq we've already handled per component key.
 
+import os
 from pathlib import Path
 
 import streamlit as st
 import streamlit.components.v1 as components
 
-# Flip to False while running `npm run dev` in viz/frontend, flip back to
-# True once `npm run build` has been run for a release.
-_RELEASE = False
 
 _FRONTEND_DIR = Path(__file__).resolve().parents[1] / "frontend"
+_FRONTEND_BUILD_DIR = _FRONTEND_DIR / "build"
 
-if _RELEASE:
+# Production uses the compiled frontend committed to the repository.
+# Local development can opt into the Vite server by defining
+# GRAPH_EDITOR_DEV_URL=http://localhost:5173.
+_DEV_URL = os.environ.get("GRAPH_EDITOR_DEV_URL")
+
+if _DEV_URL:
     _component = components.declare_component(
         "graph_editor",
-        path=str(_FRONTEND_DIR / "build"),
+        url=_DEV_URL,
     )
 else:
+    if not (_FRONTEND_BUILD_DIR / "index.html").exists():
+        raise RuntimeError(
+            "The graph editor frontend has not been built. "
+            "Run `npm ci` and `npm run build` inside viz/frontend."
+        )
+
     _component = components.declare_component(
         "graph_editor",
-        url="http://localhost:5173",
+        path=str(_FRONTEND_BUILD_DIR),
     )
 
 

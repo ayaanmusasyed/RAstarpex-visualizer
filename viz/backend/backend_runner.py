@@ -77,6 +77,12 @@ def run_algorithm(
 
     k = len(rule_names)
 
+    # The interface uses the readable name "NAMOA", while the existing
+    # C++ driver identifies this implementation as "NAMOAdr".
+    backend_algorithm_name = {
+        "NAMOA": "NAMOAdr",
+    }.get(algorithm_name, algorithm_name)
+
     name_to_id = build_node_ids(edges_df, start_label, goal_label)
     s_id = name_to_id[str(start_label).strip()]
     t_id = name_to_id[str(goal_label).strip()]
@@ -105,7 +111,7 @@ def run_algorithm(
 
         cmd = [
             str(bin_path),
-            "--algorithm", algorithm_name,
+            "--algorithm", backend_algorithm_name,
             "--merge", merge,
             "--cutoffTime", str(cutoff),
             "--trace", str(trace_path),
