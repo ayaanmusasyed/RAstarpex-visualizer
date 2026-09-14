@@ -33,17 +33,39 @@ def dispatch_problem_graph_event(event, rule_names, start_label, goal_label):
         return
 
     if action == "rename_node":
+        old_name = str(event["old"]).strip()
+        new_name = str(event["new"]).strip()
+
         st.session_state.node_names, st.session_state.edges_df = rename_node(
-            st.session_state.node_names, st.session_state.edges_df,
-            event["old"], event["new"],
+            st.session_state.node_names,
+            st.session_state.edges_df,
+            old_name,
+            new_name,
         )
+
+        if old_name == str(start_label).strip():
+            st.session_state.pending_start_label = new_name
+
+        if old_name == str(goal_label).strip():
+            st.session_state.pending_goal_label = new_name
+
         return
 
     if action == "delete_node":
+        deleted_name = str(event["name"]).strip()
+
         st.session_state.node_names, st.session_state.edges_df = delete_node(
-            st.session_state.node_names, st.session_state.edges_df,
-            event["name"],
+            st.session_state.node_names,
+            st.session_state.edges_df,
+            deleted_name,
         )
+
+        if deleted_name == str(start_label).strip():
+            st.session_state.pending_start_label = ""
+
+        if deleted_name == str(goal_label).strip():
+            st.session_state.pending_goal_label = ""
+
         return
 
     if action == "set_start":
