@@ -1,3 +1,5 @@
+from viz.examples.showcase_examples import SHOWCASE_EXAMPLES
+
 EXAMPLES = {
     "2 nodes: rulebook changes winner": """{
   "rules": ["dist", "energy"],
@@ -96,3 +98,5 @@ EXAMPLES = {
 }""",
 
 }
+
+EXAMPLES.update(SHOWCASE_EXAMPLES)
