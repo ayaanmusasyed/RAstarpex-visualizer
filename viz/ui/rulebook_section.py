@@ -61,6 +61,11 @@ def render_rulebook_section(rule_names):
     st.session_state.prec_df = prec_df
 
     st.subheader("Interactive rulebook editor")
+    if not rule_names:
+        st.info(
+            "The rulebook is empty. Click inside the drawing area "
+            "to create your first objective."
+        )
     st.caption(
         "Click one class and then another to add a priority edge. "
         "Shift-click two classes to make them equivalent. "

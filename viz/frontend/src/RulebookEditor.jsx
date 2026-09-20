@@ -80,10 +80,28 @@ export default function RulebookEditor({ elements, stylesheet, onEvent }) {
         }
       });
 
-      // Tap empty canvas: cancel a pending edge if one's in progress.
+      // Tap empty canvas.
+      //
+      // If an edge is pending, cancel it.
+      // If the rulebook is empty, create the first rule directly from
+      // the drawing canvas.
       cy.on("tap", (event) => {
-        if (event.target === cy && pendingSourceRef.current) {
+        if (event.target !== cy) return;
+
+        if (pendingSourceRef.current) {
           clearPendingSource();
+          return;
+        }
+
+        if (cy.nodes().length === 0) {
+          const name = window.prompt("Name your first objective:");
+
+          if (name && name.trim()) {
+            onEvent({
+              action: "add_rule",
+              name: name.trim(),
+            });
+          }
         }
       });
 
