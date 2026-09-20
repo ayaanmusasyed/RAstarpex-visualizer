@@ -49,5 +49,12 @@ export default function GraphCanvas({ elements, stylesheet, layout, onReady }) {
     cy.layout(layout || { name: "cose", animate: false }).run();
   }, [elements, stylesheet, layout]);
 
-  return <div ref={containerRef} className="graph-canvas" />;
+  return (
+    <div className="graph-shell">
+      <div
+        ref={containerRef}
+        className="graph-canvas"
+      />
+    </div>
+  );
 }
