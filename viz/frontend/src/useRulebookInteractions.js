@@ -9,7 +9,8 @@ import {
     useRef,
     useState,
   } from "react";
-  
+
+import { chooseRuleToDelete } from "./rulebookDelete";
   
   const PENDING_SOURCE_STYLE = {
     "border-color": "#f9a825",
@@ -122,7 +123,28 @@ import {
         cy.on("tap", "node", (event) => {
           const node = event.target;
           const tool = activeToolRef.current;
-  
+
+          if (tool === "delete_rule") {
+            const rules = node.data("rules") || [];
+            const ruleToDelete = chooseRuleToDelete(
+              rules,
+            );
+
+            if (!ruleToDelete) {
+              return;
+            }
+
+            clearPendingSource();
+            clearEquivalentSelection();
+
+            onEvent({
+              action: "delete_rule",
+              name: ruleToDelete,
+            });
+
+            return;
+          }
+          
           if (tool === "equivalent") {
             toggleEquivalentClass(node);
             return;

@@ -33,6 +33,11 @@ const RULEBOOK_TOOLS = [
     help: "Click empty canvas space to create a new objective.",
   },
   {
+    id: "delete_rule",
+    label: "Delete rule",
+    help: "Click a class to delete one of its objectives.",
+  },
+  {
     id: "add_edge",
     label: "Add priority",
     help: "Click the higher-priority class, then the lower-priority class.",
@@ -51,6 +56,9 @@ const TOOL_HELP = {
 
   add_rule:
     "Add rule mode: click empty canvas space to create an objective.",
+
+  delete_rule:
+    "Delete rule mode: click a class, then confirm the objective to remove.",
 
   add_edge:
     "Add priority mode: click the higher-priority class first, then the lower-priority class.",
