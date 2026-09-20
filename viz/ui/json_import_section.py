@@ -5,13 +5,26 @@ import pandas as pd
 from viz.examples.examples import EXAMPLES
 
 from viz.core.json_problem import parse_problem_json, problem_state_to_json
+
+from viz.ui.dimacs_import_section import (
+    render_dimacs_import_section,
+)
+
+from viz.ui.csv_import_section import (
+    render_csv_import_section,
+)
 # ------------ JSON input ----------
 
 def render_json_import_section():
 
-    st.header("Import / Export JSON")
+    st.header("Problem setup")
 
-    with st.expander("Upload or paste JSON problem"):
+    st.caption(
+        "Load an example, import a problem, or download the "
+        "current problem for later use."
+    )
+
+    with st.expander("Import complete problem from JSON"):
         
         uploaded_json = st.file_uploader(
             "Upload JSON",
@@ -81,8 +94,11 @@ def render_json_import_section():
 
             except Exception as e:
                 st.exception(e)
-                
-    with st.expander("Export current JSON"):
+
+    render_dimacs_import_section()
+    render_csv_import_section()
+
+    with st.expander("Export current problem"):
         required_keys = [
             "rule_names_csv",
             "eq_classes",
