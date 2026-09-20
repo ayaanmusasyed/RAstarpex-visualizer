@@ -62,9 +62,9 @@ def render_rulebook_section(rule_names):
 
     st.subheader("Interactive rulebook editor")
     st.caption(
-        "Double-click a class to rename, drag between classes to add a "
-        "priority edge, shift-click two classes to merge, right-click "
-        "for more actions."
+        "Click one class and then another to add a priority edge. "
+        "Shift-click two classes to make them equivalent. "
+        "Double-click a class to rename it, and right-click for more actions."
     )
 
     event = rulebook_editor(

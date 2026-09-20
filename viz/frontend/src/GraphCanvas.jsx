@@ -19,6 +19,10 @@ export default function GraphCanvas({ elements, stylesheet, layout, onReady }) {
       elements,
       style: stylesheet,
       layout: layout || { name: "cose", animate: false },
+    
+      minZoom: 0.35,
+      maxZoom: 2.5,
+      wheelSensitivity: 0.12,
     });
 
     cyRef.current = cy;
