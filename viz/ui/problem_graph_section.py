@@ -59,10 +59,8 @@ def render_problem_graph_section(
         st.subheader("Interactive problem graph")
 
         st.caption(
-            "Click empty space to add a node. Click one node and "
-            "then another to create an edge. Click an edge to edit "
-            "its costs. Double-click a node to rename it, and "
-            "right-click for more actions."
+            "Choose a tool in the graph toolbar, then click the canvas, nodes, "
+            "or edges. Right-click nodes and edges for additional shortcuts."
         )
 
         event = problem_graph_editor(

@@ -24,7 +24,14 @@ from viz.core.problem_graph_edit import (
 
 # Apply one event dict from the problem graph editor.
 def dispatch_problem_graph_event(event, rule_names, start_label, goal_label):
+    # Ignore empty startup values from the frontend component.
+    if not isinstance(event, dict):
+        return
+
     action = event.get("action")
+
+    if not action:
+        return
 
     if action == "add_node":
         st.session_state.node_names = add_node(

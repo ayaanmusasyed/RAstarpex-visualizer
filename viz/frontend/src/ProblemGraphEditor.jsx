@@ -18,160 +18,137 @@
 // fields, never .id(), when building an event -- using .id() directly
 // was the earlier bug that made delete/rename/reverse silently fail.
 
-import React, { useCallback, useRef } from "react";
-import GraphCanvas from "./GraphCanvas";
+// Visual toolbar for editing the problem graph.
+//
+// The graph elements and styling still come from Python.
+// This file only owns the toolbar and connects it to the
+// Cytoscape interaction hook.
 
-const PENDING_SOURCE_STYLE = {
-  "border-color": "#f9a825",
-  "border-width": 4,
+import React, { useState } from "react";
+
+import EditorToolbar from "./EditorToolbar";
+import GraphCanvas from "./GraphCanvas";
+import useProblemGraphInteractions from "./useProblemGraphInteractions";
+
+
+const PROBLEM_GRAPH_TOOLS = [
+  {
+    id: "select",
+    label: "Select",
+    help: "Drag nodes or double-click one to rename it.",
+  },
+  {
+    id: "add_node",
+    label: "Add node",
+    help: "Click empty canvas space to add a node.",
+  },
+  {
+    id: "add_edge",
+    label: "Add edge",
+    help: "Click the source node, then the destination node.",
+  },
+  {
+    id: "edit_costs",
+    label: "Edit costs",
+    help: "Click an edge to change its costs.",
+  },
+  {
+    id: "set_start",
+    label: "Set start",
+    help: "Click a node to make it the start node.",
+  },
+  {
+    id: "set_goal",
+    label: "Set goal",
+    help: "Click a node to make it the goal node.",
+  },
+  {
+    id: "reverse_edge",
+    label: "Reverse",
+    help: "Click an edge to reverse its direction.",
+  },
+  {
+    id: "delete",
+    label: "Delete",
+    help: "Click a node or edge to delete it.",
+  },
+];
+
+
+const TOOL_HELP = {
+  select:
+    "Select mode: drag nodes or double-click one to rename it.",
+
+  add_node:
+    "Add node mode: click empty canvas space to create a node.",
+
+  add_edge:
+    "Add edge mode: click the source node first, then the destination node.",
+
+  edit_costs:
+    "Edit costs mode: click an edge and enter one cost for each objective.",
+
+  set_start:
+    "Set start mode: click the node that should be used as the start.",
+
+  set_goal:
+    "Set goal mode: click the node that should be used as the goal.",
+
+  reverse_edge:
+    "Reverse mode: click an edge to reverse its direction.",
+
+  delete:
+    "Delete mode: click a node or edge to remove it.",
 };
 
-function parseCosts(raw, ruleNames) {
-  if (raw === null) return null; // user hit Cancel
 
-  const costs = raw.split(",").map((s) => parseFloat(s.trim()));
+export default function ProblemGraphEditor({
+  elements,
+  stylesheet,
+  ruleNames,
+  onEvent,
+}) {
+  const [activeTool, setActiveTool] = useState("select");
 
-  if (costs.length !== ruleNames.length || costs.some(Number.isNaN)) {
-    window.alert(
-      `Expected ${ruleNames.length} comma-separated numbers (${ruleNames.join(", ")}), got: "${raw}"`,
-    );
-    return null;
-  }
+  const {
+    handleReady,
+    clearPendingSource,
+  } = useProblemGraphInteractions({
+    activeTool,
+    ruleNames,
+    onEvent,
+  });
 
-  return costs;
-}
 
-export default function ProblemGraphEditor({ elements, stylesheet, ruleNames, onEvent }) {
-  const pendingSourceRef = useRef(null); // holds a cytoscape node, or null
-
-  const clearPendingSource = () => {
-    if (pendingSourceRef.current) {
-      pendingSourceRef.current.removeStyle("border-color border-width");
-    }
-    pendingSourceRef.current = null;
-  };
-
-  const handleReady = useCallback(
-    (cy) => {
-      // Tap a node: first tap marks the pending source, second tap
-      // (on a different node) completes the edge.
-      cy.on("tap", "node", (event) => {
-        const node = event.target;
-
-        if (!pendingSourceRef.current) {
-          pendingSourceRef.current = node;
-          node.style(PENDING_SOURCE_STYLE);
-          return;
-        }
-
-        if (pendingSourceRef.current.same(node)) {
+  const toolbar = (
+    <>
+      <EditorToolbar
+        tools={PROBLEM_GRAPH_TOOLS}
+        activeTool={activeTool}
+        onToolChange={(tool) => {
           clearPendingSource();
-          return;
-        }
+          setActiveTool(tool);
+        }}
+      />
 
-        const sourceName = pendingSourceRef.current.data("node_name");
-        const targetName = node.data("node_name");
-        clearPendingSource();
-
-        const raw = window.prompt(
-          `Edge costs, ${ruleNames.join(", ")} in that order (comma-separated):`,
-        );
-        const costs = parseCosts(raw, ruleNames);
-        if (costs === null) return;
-
-        onEvent({ action: "add_edge", source: sourceName, target: targetName, costs });
-      });
-
-      // Tap an edge: edit its costs directly.
-      cy.on("tap", "edge", (event) => {
-        const edge = event.target;
-
-        const raw = window.prompt(
-          `Edit costs, ${ruleNames.join(", ")} in that order (comma-separated):`,
-          (edge.data("costs") || []).join(", "),
-        );
-        const costs = parseCosts(raw, ruleNames);
-        if (costs === null) return;
-
-        onEvent({ action: "update_edge", edge_index: edge.data("edge_index"), costs });
-      });
-
-      // Double-click a node -> rename.
-      cy.on("dbltap", "node", (event) => {
-        const node = event.target;
-        const oldName = node.data("node_name");
-        // TODO: replace with an absolutely-positioned <input> overlay
-        // at node.renderedPosition() instead of window.prompt.
-        const newName = window.prompt("Rename node:", oldName);
-        if (newName && newName !== oldName) {
-          onEvent({ action: "rename_node", old: oldName, new: newName });
-        }
-      });
-
-      // Tap empty canvas: cancel a pending edge if one's in progress,
-      // otherwise add a new node.
-      cy.on("tap", (event) => {
-        if (event.target !== cy) return;
-
-        if (pendingSourceRef.current) {
-          clearPendingSource();
-          return;
-        }
-
-        const name = window.prompt("New node name:");
-        if (name) {
-          onEvent({ action: "add_node", name });
-        }
-      });
-
-      // Right-click a node -> set start / set goal / delete.
-      cy.cxtmenu({
-        selector: "node",
-        commands: [
-          {
-            content: "Set start",
-            select: (node) => onEvent({ action: "set_start", name: node.data("node_name") }),
-          },
-          {
-            content: "Set goal",
-            select: (node) => onEvent({ action: "set_goal", name: node.data("node_name") }),
-          },
-          {
-            content: "Delete",
-            select: (node) => {
-              if (pendingSourceRef.current && pendingSourceRef.current.same(node)) {
-                clearPendingSource();
-              }
-              onEvent({ action: "delete_node", name: node.data("node_name") });
-            },
-          },
-        ],
-      });
-
-      // Right-click an edge -> reverse / delete.
-      cy.cxtmenu({
-        selector: "edge",
-        commands: [
-          {
-            content: "Reverse",
-            select: (edge) => onEvent({ action: "reverse_edge", edge_index: edge.data("edge_index") }),
-          },
-          {
-            content: "Delete",
-            select: (edge) => onEvent({ action: "delete_edge", edge_index: edge.data("edge_index") }),
-          },
-        ],
-      });
-    },
-    [onEvent, ruleNames],
+      <div className="editor-tool-help">
+        {TOOL_HELP[activeTool]}
+      </div>
+    </>
   );
+
 
   return (
     <GraphCanvas
       elements={elements}
       stylesheet={stylesheet}
-      layout={{ name: "cose", animate: false }}
+      layout={{
+        name: "preset",
+        fit: true,
+        padding: 45,
+      }}
       onReady={handleReady}
+      toolbar={toolbar}
     />
   );
 }
