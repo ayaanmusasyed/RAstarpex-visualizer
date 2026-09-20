@@ -8,7 +8,13 @@
 import React, { useEffect, useRef } from "react";
 import cytoscape from "./cytoscapeSetup";
 
-export default function GraphCanvas({ elements, stylesheet, layout, onReady }) {
+export default function GraphCanvas({
+  elements,
+  stylesheet,
+  layout,
+  onReady,
+  toolbar = null,
+}) {
   const containerRef = useRef(null);
   const cyRef = useRef(null);
 
@@ -23,6 +29,7 @@ export default function GraphCanvas({ elements, stylesheet, layout, onReady }) {
       minZoom: 0.35,
       maxZoom: 2.5,
       wheelSensitivity: 0.12,
+      selectionType: "additive",
     });
 
     cyRef.current = cy;
@@ -51,6 +58,12 @@ export default function GraphCanvas({ elements, stylesheet, layout, onReady }) {
 
   return (
     <div className="graph-shell">
+      {toolbar && (
+        <div className="graph-toolbar-area">
+          {toolbar}
+        </div>
+      )}
+  
       <div
         ref={containerRef}
         className="graph-canvas"
