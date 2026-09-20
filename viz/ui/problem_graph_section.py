@@ -38,43 +38,75 @@ def render_problem_graph_section(
     prec_df,
     eps,
 ):
-    initialize_problem_graph_state(k, start_label, goal_label,)
+    initialize_problem_graph_state(
+        k,
+        start_label,
+        goal_label,
+    )
 
     st.header("Problem graph editor")
 
     render_problem_graph_creation_panel()
 
-    st.subheader("Interactive problem graph")
-    st.caption(
-        "Click empty space to add a node. Click a node, then click "
-        "another node, to connect them. Click an edge to edit its "
-        "costs. Double-click a node to rename. Right-click for more "
-        "actions."
+    editor_mode = st.radio(
+        "Problem graph editing mode",
+        ["Visual editor", "Table editor"],
+        horizontal=True,
+        key="problem_graph_editing_mode",
     )
 
-    event = problem_graph_editor(
-        elements=problem_graph_cytoscape_elements(
-            st.session_state.node_names,
-            st.session_state.edges_df,
-            rule_names,
-            start_label,
-            goal_label,
-        ),
-        stylesheet=problem_graph_cytoscape_stylesheet(),
-        rule_names=rule_names,
-        key="problem_graph_editor",
+    if editor_mode == "Visual editor":
+        st.subheader("Interactive problem graph")
+
+        st.caption(
+            "Click empty space to add a node. Click one node and "
+            "then another to create an edge. Click an edge to edit "
+            "its costs. Double-click a node to rename it, and "
+            "right-click for more actions."
+        )
+
+        event = problem_graph_editor(
+            elements=problem_graph_cytoscape_elements(
+                st.session_state.node_names,
+                st.session_state.edges_df,
+                rule_names,
+                start_label,
+                goal_label,
+            ),
+            stylesheet=problem_graph_cytoscape_stylesheet(),
+            rule_names=rule_names,
+            key="problem_graph_editor",
+        )
+
+        if event is not None:
+            dispatch_problem_graph_event(
+                event,
+                rule_names,
+                start_label,
+                goal_label,
+            )
+            st.rerun()
+
+    else:
+        st.subheader("Graph edge table")
+
+        st.caption(
+            "Each row represents one directed edge. Enter the source, "
+            "target, and one cost for each objective."
+        )
+
+        render_edge_table(k)
+
+    render_problem_graph_sanity_check(
+        st.session_state.edges_df,
+        start_label,
+        goal_label,
+        rule_names,
+        prec_df,
+        eps,
     )
-
-    if event is not None:
-        dispatch_problem_graph_event(event, rule_names, start_label, goal_label)
-        st.rerun()
-
-    render_advanced_edge_table(k)
-
-    render_problem_graph_sanity_check(st.session_state.edges_df, start_label, goal_label, rule_names, prec_df, eps,)
 
     return st.session_state.edges_df
-
 
 # Initialize and synchronize problem graph state.
 def initialize_problem_graph_state(
@@ -98,15 +130,44 @@ def initialize_problem_graph_state(
 # Render the editable edge table as an advanced option.
 # Left as plain Streamlit on purpose -- typing exact float costs is
 # fiddly on a canvas. This is the power-user fallback for bulk edits.
-def render_advanced_edge_table(k):
-    with st.expander("Advanced: graph edge table"):
-        st.caption(
-            "Manual edge list. Each row stores one "
-            "directed edge and its cost vector."
+def render_edge_table(k):
+    column_config = {
+        "u": st.column_config.TextColumn(
+            "Source",
+            required=True,
+        ),
+        "v": st.column_config.TextColumn(
+            "Target",
+            required=True,
+        ),
+    }
+
+    for i in range(k):
+        column_config[f"c{i}"] = (
+            st.column_config.NumberColumn(
+                f"Objective {i}",
+                min_value=0.0,
+                step=1.0,
+                required=True,
+            )
         )
 
-        edited_edges = st.data_editor(st.session_state.edges_df, key="edges_editor", use_container_width=True, num_rows="dynamic",)
+    edited_edges = st.data_editor(
+        st.session_state.edges_df,
+        key="problem_edges_editor",
+        use_container_width=True,
+        num_rows="dynamic",
+        column_config=column_config,
+    )
 
-        st.session_state.edges_df = sync_edge_cost_columns(edited_edges, k,)
+    st.session_state.edges_df = sync_edge_cost_columns(
+        edited_edges,
+        k,
+    )
 
-        st.session_state.node_names = sync_node_names(st.session_state.node_names, st.session_state.edges_df, st.session_state.get("start_label", ""), st.session_state.get("goal_label", ""),)
+    st.session_state.node_names = sync_node_names(
+        st.session_state.node_names,
+        st.session_state.edges_df,
+        st.session_state.get("start_label", ""),
+        st.session_state.get("goal_label", ""),
+    )
