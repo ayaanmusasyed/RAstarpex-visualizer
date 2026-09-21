@@ -34,11 +34,46 @@ def dispatch_problem_graph_event(event, rule_names, start_label, goal_label):
         return
 
     if action == "add_node":
-        st.session_state.node_names = add_node(
-            st.session_state.node_names, event["name"],
-        )
-        return
+        node_name = str(event["name"]).strip()
 
+        st.session_state.node_names = add_node(
+            st.session_state.node_names,
+            node_name,
+        )
+
+        st.session_state.setdefault(
+            "node_positions",
+            {},
+        )
+
+        if "x" in event and "y" in event:
+            st.session_state.node_positions[node_name] = {
+                "x": float(event["x"]),
+                "y": float(event["y"]),
+            }
+
+        return
+    
+    if action == "move_node":
+        node_name = str(event["name"]).strip()
+
+        if node_name not in st.session_state.node_names:
+            raise ValueError(
+                f"Unknown node '{node_name}'."
+            )
+
+        st.session_state.setdefault(
+            "node_positions",
+            {},
+        )
+
+        st.session_state.node_positions[node_name] = {
+            "x": float(event["x"]),
+            "y": float(event["y"]),
+        }
+
+        return
+    
     if action == "rename_node":
         old_name = str(event["old"]).strip()
         new_name = str(event["new"]).strip()
@@ -56,6 +91,15 @@ def dispatch_problem_graph_event(event, rule_names, start_label, goal_label):
         if old_name == str(goal_label).strip():
             st.session_state.pending_goal_label = new_name
 
+        positions = st.session_state.setdefault(
+            "node_positions",
+            {},
+        )
+
+        if old_name in positions:
+            positions[new_name] = positions.pop(
+                old_name
+            )
         return
 
     if action == "delete_node":
@@ -73,6 +117,14 @@ def dispatch_problem_graph_event(event, rule_names, start_label, goal_label):
         if deleted_name == str(goal_label).strip():
             st.session_state.pending_goal_label = ""
 
+        st.session_state.setdefault(
+            "node_positions",
+            {},
+        ).pop(
+            deleted_name,
+            None,
+        )
+        
         return
 
     if action == "set_start":

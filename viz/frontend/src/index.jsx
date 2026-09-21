@@ -48,7 +48,9 @@ function render(event) {
 
   // Cytoscape needs a real pixel height; keep it fixed for now, matching
   // the width=700, height=400 the old st_cytoscapejs calls used.
-  Streamlit.setFrameHeight(mode === "rulebook" ? 350 : 400);
+  Streamlit.setFrameHeight(
+    mode === "rulebook" ? 380 : 500,
+  );
 }
 
 Streamlit.events.addEventListener(Streamlit.RENDER_EVENT, render);

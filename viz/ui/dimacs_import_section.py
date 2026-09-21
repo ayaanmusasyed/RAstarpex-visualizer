@@ -84,6 +84,7 @@ def render_dimacs_import_section():
                 st.session_state.eq_classes = parsed["eq_classes"]
                 st.session_state.prec_df = parsed["prec_df"]
                 st.session_state.node_names = parsed["node_names"]
+                st.session_state.node_positions = {}
                 st.session_state.edges_df = parsed["edges_df"]
                 st.session_state.start_label = parsed["start"]
                 st.session_state.goal_label = parsed["goal"]

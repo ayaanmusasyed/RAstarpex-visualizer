@@ -5,9 +5,11 @@ def problem_graph_cytoscape_elements(
     rule_names,
     start_label,
     goal_label,
+    node_positions=None,
 ):
     elements = []
-
+    node_positions = node_positions or {}
+    
     for i, node in enumerate(node_names):
         kind = "node"
 
@@ -19,6 +21,31 @@ def problem_graph_cytoscape_elements(
         col = i % 4
         row = i // 4
 
+        default_position = {
+            "x": 160 * col + 100,
+            "y": 130 * row + 90,
+        }
+
+        saved_position = node_positions.get(
+            str(node),
+            default_position,
+        )
+
+        position = {
+            "x": float(
+                saved_position.get(
+                    "x",
+                    default_position["x"],
+                )
+            ),
+            "y": float(
+                saved_position.get(
+                    "y",
+                    default_position["y"],
+                )
+            ),
+        }
+
         elements.append({
             "data": {
                 "id": f"node::{node}",
@@ -26,10 +53,7 @@ def problem_graph_cytoscape_elements(
                 "node_name": node,
                 "kind": kind,
             },
-            "position": {
-                "x": 160 * col + 100,
-                "y": 130 * row + 90,
-            },
+            "position": position,
         })
 
     df = edges_df.reset_index(drop=True)

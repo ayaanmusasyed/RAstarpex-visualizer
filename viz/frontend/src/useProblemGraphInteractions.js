@@ -27,7 +27,7 @@ import {
     const ruleNamesRef = useRef(ruleNames);
     const onEventRef = useRef(onEvent);
     const pendingSourceRef = useRef(null);
-  
+    const dragStartRef = useRef(null);
   
     useEffect(() => {
       activeToolRef.current = activeTool;
@@ -82,6 +82,53 @@ import {
   
     const handleReady = useCallback(
       (cy) => {
+        // Remember where a node started before dragging.
+        cy.on("grab", "node", (event) => {
+          if (activeToolRef.current !== "select") {
+            dragStartRef.current = null;
+            return;
+          }
+
+          const node = event.target;
+          const position = node.position();
+
+          dragStartRef.current = {
+            nodeName: node.data("node_name"),
+            x: position.x,
+            y: position.y,
+          };
+        });
+
+
+        // Save a node position only if it actually moved.
+        cy.on("free", "node", (event) => {
+          const start = dragStartRef.current;
+          dragStartRef.current = null;
+
+          if (!start) {
+            return;
+          }
+
+          const node = event.target;
+          const position = node.position();
+
+          const moved =
+            Math.abs(position.x - start.x) > 0.5
+            || Math.abs(position.y - start.y) > 0.5;
+
+          if (!moved) {
+            return;
+          }
+
+          onEventRef.current({
+            action: "move_node",
+            name: node.data("node_name"),
+            x: position.x,
+            y: position.y,
+          });
+        });
+
+
         // Handle node tools.
         cy.on("tap", "node", (event) => {
           const node = event.target;
@@ -222,6 +269,8 @@ import {
           onEventRef.current({
             action: "add_node",
             name: name.trim(),
+            x: event.position.x,
+            y: event.position.y,
           });
         });
   

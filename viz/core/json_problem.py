@@ -127,6 +127,25 @@ def parse_problem_json(raw_json):
             if node not in node_names:
                 node_names.append(node)
 
+    node_positions = {}
+
+    for node, position in graph.get(
+        "positions",
+        {},
+    ).items():
+        node = str(node).strip()
+
+        if (
+            node in node_names
+            and isinstance(position, dict)
+            and "x" in position
+            and "y" in position
+        ):
+            node_positions[node] = {
+                "x": float(position["x"]),
+                "y": float(position["y"]),
+            }
+
     return {
         "rule_names": rule_names,
         "eq_classes": eq_classes,
@@ -136,6 +155,7 @@ def parse_problem_json(raw_json):
         "start": start,
         "goal": goal,
         "eps": eps,
+        "node_positions": node_positions,
     }
 
 
@@ -149,6 +169,7 @@ def problem_state_to_json(
     start,
     goal,
     eps,
+    node_positions=None,
 ):
     rulebook_edges = []
 
@@ -210,6 +231,7 @@ def problem_state_to_json(
         "graph": {
             "nodes": nodes,
             "edges": graph_edges,
+            "positions": node_positions or {},
         },
         "start": start,
         "goal": goal,

@@ -70,6 +70,7 @@ def render_problem_graph_section(
                 rule_names,
                 start_label,
                 goal_label,
+                st.session_state.node_positions,
             ),
             stylesheet=problem_graph_cytoscape_stylesheet(),
             rule_names=rule_names,
@@ -124,6 +125,16 @@ def initialize_problem_graph_state(
 
     st.session_state.node_names = sync_node_names(st.session_state.node_names, st.session_state.edges_df, start_label, goal_label,)
 
+    if "node_positions" not in st.session_state:
+        st.session_state.node_positions = {}
+
+    # Remove positions belonging to nodes that no longer exist.
+    st.session_state.node_positions = {
+        node: position
+        for node, position
+        in st.session_state.node_positions.items()
+        if node in st.session_state.node_names
+    }
 
 # Render the editable edge table as an advanced option.
 # Left as plain Streamlit on purpose -- typing exact float costs is
